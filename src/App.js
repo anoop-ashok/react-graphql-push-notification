@@ -1,10 +1,24 @@
 import React, { useEffect } from 'react';
+import getBrowserFingerprint from 'get-browser-fingerprint';
+import { useMutation, gql } from '@apollo/client';
 import logo from './logo.svg';
 import './App.css';
+
+const SUBSCRIBE_USER = gql`
+mutation($browserUniqueKey: String!, $subscription: JSONObject){
+  subscribeNotification(browserUniqueKey: $browserUniqueKey, subscription: $subscription){
+  }
+}
+`;
 
 function App() {
   const publicVapidKey = 'BPsQ6mhuJZj2fLNbmSQhubbujE7koW9bi6RF-p6ZlxrGb4wMq_YCDb0LL_QAPRF3AWdZsdyCYK29QOi41ic_g5s';
   const subscriptionUrl = './custom-sw.js';
+  
+  const [
+    subscribePushNotification,
+    { error: subscribeUserError, data: subscribeUserData },
+  ] = useMutation(SUBSCRIBE_USER);
   
   const urlBase64ToUint8Array = (base64String) => {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -23,18 +37,19 @@ function App() {
   const subscribeUser = async () => {
     const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
     const registration = await navigator.serviceWorker.register(subscriptionUrl);
+    const fingerprint = `${getBrowserFingerprint()}`;
     const existedSubscription = await registration.pushManager.getSubscription();
     if (existedSubscription === null) {
       const newSubscription = await registration.pushManager.subscribe({
         applicationServerKey: convertedVapidKey,
         userVisibleOnly: true,
       });
-      // subscribePushNotification({
-      //   variables: {
-      //     browserUniqueKey: fingerprint,
-      //     subscription: newSubscription,
-      //   },
-      // });
+      subscribePushNotification({
+        variables: {
+          browserUniqueKey: fingerprint,
+          subscription: newSubscription,
+        },
+      });
     }
   };
 
