@@ -2,13 +2,19 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import { ApolloClient, ApolloLink, ApolloProvider, InMemoryCache } from '@apollo/client';
+
+const apolloClient = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: new ApolloLink((operation) => {
+    return null;
+  }),
+});
 
 ReactDOM.render(
-  <React.StrictMode>
-
+  <ApolloProvider client={apolloClient}>
     <App />
-
-  </React.StrictMode>,
+  </ApolloProvider>,
   document.getElementById('root'),
 );
 
